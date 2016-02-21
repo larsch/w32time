@@ -119,7 +119,9 @@ static void Abort(LPCTSTR message)
 static LPCTSTR GeneratePathExt()
 {
    static TCHAR pathext[MAX_PATH];
-   GetEnvironmentVariable(_T("PATHEXT"), pathext, MAX_PATH);
+   DWORD Length = GetEnvironmentVariable(_T("PATHEXT"), pathext, MAX_PATH);
+   if (Length > MAX_PATH)
+      Abort(_T("PATHEXT too long"));
    LPTSTR p = pathext;
    while (*p) {
       if (*p == PATHSEP)
@@ -195,9 +197,9 @@ void ExecReportTimes(LPCTSTR ProgramPath, LPTSTR CommandLine)
    LONGLONG system = KernelTime.LargeInteger.QuadPart / 10000u;
    LONGLONG user = UserTime.LargeInteger.QuadPart / 10000u;
 
-   PrintF("real    %1!d!.%2!03d!\n", (LONG)(real / 1000u), (LONG)(real % 1000));
-   PrintF("system  %1!d!.%2!03d!\n", (LONG)(system / 1000u), (LONG)(system % 1000));
-   PrintF("user    %1!d!.%2!03d!\n", (LONG)(user / 1000u), (LONG)(user % 1000));
+   PrintF(_T("real    %1!d!.%2!03d!\n"), (LONG)(real / 1000u), (LONG)(real % 1000));
+   PrintF(_T("system  %1!d!.%2!03d!\n"), (LONG)(system / 1000u), (LONG)(system % 1000));
+   PrintF(_T("user    %1!d!.%2!03d!\n"), (LONG)(user / 1000u), (LONG)(user % 1000));
 
    DWORD dwExitCode;
    if (!GetExitCodeProcess(ProcessInformation.hProcess, &dwExitCode))
@@ -214,7 +216,7 @@ void Main()
 
    LPTSTR ChildCommandLine = PathGetArgs(CommandLine);
    if (*ChildCommandLine == '\0')
-      Abort("Usage: w32time <command>\n");
+      Abort(_T("Usage: w32time <command>\n"));
 
    LPTSTR ChildArguments = PathGetArgs(ChildCommandLine);
    LPTSTR CommandEnd = ChildCommandLine;
