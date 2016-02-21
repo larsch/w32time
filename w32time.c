@@ -220,7 +220,7 @@ void Main()
 
    LPTSTR ChildArguments = PathGetArgs(ChildCommandLine);
    LPTSTR CommandEnd = ChildCommandLine;
-   DWORD CommandLength = ChildArguments - ChildCommandLine;
+   DWORD CommandLength = (DWORD)(ChildArguments - ChildCommandLine);
    while (CommandLength > 0 && ChildCommandLine[CommandLength-1] == _T(' '))
       --CommandLength;
 
