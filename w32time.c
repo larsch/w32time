@@ -1,7 +1,5 @@
 #include <windows.h>
 #include <tchar.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <shlwapi.h>
 
 #define TCHARSIZE sizeof(TCHAR)
@@ -10,7 +8,6 @@
 typedef union {
    FILETIME FileTime;
    LARGE_INTEGER LargeInteger;
-   uint64_t uint64;
 } TimeUnion;
 
 /* Allocate a buffer for a string of 'n' characters */
@@ -170,6 +167,7 @@ static BOOL SearchPathAllowPathExt(LPCTSTR Program, LPTSTR _Out_ ProgramPath)
       return TRUE;
 }
 
+/* Run the program and report real/system/user time */
 void ExecReportTimes(LPCTSTR ProgramPath, LPTSTR CommandLine)
 {
    TimeUnion CreationTime;
@@ -193,13 +191,13 @@ void ExecReportTimes(LPCTSTR ProgramPath, LPTSTR CommandLine)
    if (!GetProcessTimes(ProcessInformation.hProcess, &CreationTime.FileTime, &ExitTime.FileTime, &KernelTime.FileTime, &UserTime.FileTime))
       AbortLastError(_T("GetProcessTimes"));
 
-   uint64_t real = (ExitTime.uint64 - CreationTime.uint64) / 10000;
-   uint64_t system = KernelTime.uint64 / 10000;
-   uint64_t user = UserTime.uint64 / 10000;
+   LONGLONG real = (ExitTime.LargeInteger.QuadPart - CreationTime.LargeInteger.QuadPart) / 10000u;
+   LONGLONG system = KernelTime.LargeInteger.QuadPart / 10000u;
+   LONGLONG user = UserTime.LargeInteger.QuadPart / 10000u;
 
-   fprintf(stderr, "real    %.3f\n", real / 1000.0);
-   fprintf(stderr, "system  %.3f\n", system / 1000.0);
-   fprintf(stderr, "user    %.3f\n", user / 1000.0);
+   PrintF("real    %1!d!.%2!03d!\n", (LONG)(real / 1000u), (LONG)(real % 1000));
+   PrintF("system  %1!d!.%2!03d!\n", (LONG)(system / 1000u), (LONG)(system % 1000));
+   PrintF("user    %1!d!.%2!03d!\n", (LONG)(user / 1000u), (LONG)(user % 1000));
 
    DWORD dwExitCode;
    if (!GetExitCodeProcess(ProcessInformation.hProcess, &dwExitCode))
@@ -209,16 +207,14 @@ void ExecReportTimes(LPCTSTR ProgramPath, LPTSTR CommandLine)
    ExitProcess(dwExitCode);
 }
 
-int main()
+/* Main entry point */
+void Main()
 {
    LPTSTR CommandLine = GetCommandLine();
 
    LPTSTR ChildCommandLine = PathGetArgs(CommandLine);
    if (*ChildCommandLine == '\0')
-   {
-      fprintf(stderr, "Usage: w32time <command>\n");
-      return -1;
-   }
+      Abort("Usage: w32time <command>\n");
 
    LPTSTR ChildArguments = PathGetArgs(ChildCommandLine);
    LPTSTR CommandEnd = ChildCommandLine;
@@ -232,6 +228,4 @@ int main()
    SearchPathAllowPathExt(ChildCommand, FinalApplicationName);
 
    ExecReportTimes(FinalApplicationName, ChildCommandLine);
-
-   return 0;
 }
