@@ -48,6 +48,10 @@ int main(int argc, char** argv)
    LPTSTR CommandLine = GetCommandLine();
 
    LPTSTR ChildCommandLine = SkipCommandLineWord(CommandLine);
+
+   (void)argv;
+   (void)argc;
+
    while (*ChildCommandLine == ' ')
       ChildCommandLine++;
 

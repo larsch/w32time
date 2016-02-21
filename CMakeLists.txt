@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.3)
+project(w32time)
+if(MSVC)
+  add_compile_options(/W4 /WX)
+elseif(CMAKE_COMPILER_IS_GNUCC)
+  add_compile_options(-Wall -Wextra -pedantic -Werror -std=c11)
+endif()
+add_executable(w32time w32time.c)
